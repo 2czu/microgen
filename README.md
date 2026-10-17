@@ -1,0 +1,2 @@
+mini-generateur de microstructures 3D par schema booleen, le but etant de remplir de volume 3d de NxNxN voxels en placant aleatoirement des spheres, puis calculer la porosite (fraction de voxels vides)
+un voxel vaut 1 s'il est au moins dans une sphere, 0 sinon, d'ou la notion d'algebre booleene.

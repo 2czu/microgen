@@ -12,6 +12,7 @@ BooleanModel::BooleanModel()
     this->_radius = 6.0;
     this->_seed = 42;
     this->_outfileName = "vol.bin";
+    this->_outdir = "out";
 }
 
 BooleanModel::BooleanModel(unsigned int size, unsigned int n, double radius, size_t seed)
@@ -20,6 +21,8 @@ BooleanModel::BooleanModel(unsigned int size, unsigned int n, double radius, siz
     this->_n = n;
     this->_radius = radius;
     this->_seed = seed;
+    this->_outfileName = "vol.bin";
+    this->_outdir = "out";
 }
 
 BooleanModel::BooleanModel(unsigned int size, unsigned int n, double radius, size_t seed, std::string outfileName)
@@ -29,6 +32,18 @@ BooleanModel::BooleanModel(unsigned int size, unsigned int n, double radius, siz
     this->_radius = radius;
     this->_seed = seed;
     this->_outfileName = outfileName;
+    this->_outdir = "out";
+}
+
+
+BooleanModel::BooleanModel(unsigned int size, unsigned int n, double radius, size_t seed, std::string outfileName, std::string outdir)
+{
+    this->_size = size;
+    this->_n = n;
+    this->_radius = radius;
+    this->_seed = seed;
+    this->_outfileName = outfileName;
+    this->_outdir = outdir;
 }
 
 
@@ -48,6 +63,9 @@ BooleanModel &BooleanModel::operator=(const BooleanModel &other)
         this->_n = other.getSpheres();
         this->_radius = other.getRadius();
         this->_seed = other.getSeed();
+        this->_outfileName = other._outfileName;
+        this->_outdir = other._outdir;
+        this->_volume = other._volume;
     }
     return *this;
 }
@@ -165,17 +183,53 @@ void                BooleanModel::addSphere(double cx, double cy, double cz)
 
 void               BooleanModel::writeToFile()
 {
-    std::ofstream f(_outfileName, std::ios::binary);
+    const std::filesystem::path outputDir = _outdir.empty()
+        ? std::filesystem::path(".")
+        : std::filesystem::path(_outdir);
+    const std::filesystem::path outputFile = outputDir / _outfileName;
+
+    if (!std::filesystem::is_directory(outputDir))
+    {
+        std::cerr << "Output directory does not exist or is not a directory: "
+                  << outputDir << "." << std::endl;
+        return;
+    }
+
+    std::ofstream f(outputFile, std::ios::binary);
 
     if (f.is_open())
     {
         f.write(reinterpret_cast<const char*>(_volume.data()), _volume.size());
         f.close();
+        std::cout << "Successfully wrote volume information to " << outputFile << "!" << std::endl;
     }
     else
     {
-        std::cerr << "Couldn't open " << _outfileName << ".";
+        std::cerr << "Couldn't open " << _outfileName << "." << std::endl;
     }
+
+    json meta = {
+        {"size", this->_size},
+        {"spheres", this->_n},
+        {"radius", this->_radius},
+        {"seed", this->_seed},
+        {"porosity", porosity()},
+        {"outfile", this->_outfileName},
+        {"outdir", this->_outdir},
+    };
+
+    const std::filesystem::path metaFile = outputDir / "meta.json";
+    std::ofstream fjson(metaFile);
+    if (fjson.is_open())
+    {
+        fjson << meta.dump(4);
+        fjson.close();
+        std::cout << "Successfully wrote model information to " << metaFile << std::endl;
+    }
+    else {
+        std::cerr << "Couldn't open meta.json." << std::endl;
+    }
+
 }
 
 double          BooleanModel::porosity() const

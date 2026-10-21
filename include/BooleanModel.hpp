@@ -6,6 +6,10 @@
 # include <cmath>
 # include <fstream>
 # include <algorithm>
+# include <filesystem>
+# include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
 
 class BooleanModel
 {
@@ -18,6 +22,7 @@ class BooleanModel
         double                _radius;
         size_t                _seed;
         std::string           _outfileName;
+        std::string           _outdir;
         std::vector<uint8_t>  _volume;
 
     public:
@@ -27,6 +32,7 @@ class BooleanModel
         BooleanModel();
         BooleanModel(unsigned int size, unsigned int n, double radius, size_t seed);
         BooleanModel(unsigned int size, unsigned int n, double radius, size_t seed, std::string outfileName);
+        BooleanModel(unsigned int size, unsigned int n, double radius, size_t seed, std::string outfileName, std::string outdir);
         BooleanModel(const BooleanModel &other);
         BooleanModel& operator=(const BooleanModel &other);
 
